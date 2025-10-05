@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "NetSdrClientApp/1.0.0": {
+        "runtime": {
+          "NetSdrClientApp.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "NetSdrClientApp/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
