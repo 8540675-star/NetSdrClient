@@ -2,9 +2,9 @@ name: SonarCloud analysis
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 permissions:
@@ -27,8 +27,8 @@ jobs:
           dotnet tool install --global dotnet-sonarscanner
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
           dotnet sonarscanner begin `
-            /d:sonar.projectKey="<8540675-star_NetSdrClient>" `
-            /d:sonar.organization="<8540675-star>" `
+            /d:sonar.projectKey="8540675-star_NetSdrClient" `
+            /d:sonar.organization="8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" `
             /d:sonar.cpd.cs.minimumTokens=40 `
