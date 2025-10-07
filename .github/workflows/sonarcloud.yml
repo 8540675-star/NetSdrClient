@@ -29,8 +29,8 @@ jobs:
           dotnet tool install dotnet-sonarscanner
           dotnet tool restore
           dotnet dotnet-sonarscanner begin `
-            /d:sonar.projectKey="8540675-star_NetSdrClient" `
-            /d:sonar.organization="8540675-star" `
+            /k:"8540675-star_NetSdrClient" `
+            /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" `
