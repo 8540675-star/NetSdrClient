@@ -1,3 +1,4 @@
+# SonarCloud workflow - updated
 name: SonarCloud analysis
 
 on:
