@@ -22,10 +22,10 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: SonarScanner Begin
+     - name: SonarScanner Begin
   run: |
     dotnet tool install --global dotnet-sonarscanner
-    dotnet sonarscanner begin `
+    dotnet-sonarscanner begin `
       /d:sonar.projectKey="8540675-star_NetSdrClient" `
       /d:sonar.organization="8540675-star" `
       /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
