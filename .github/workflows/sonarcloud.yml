@@ -37,6 +37,7 @@ jobs:
             /d:sonar.host.url="https://sonarcloud.io"
         shell: pwsh
         env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           DOTNET_ROOT: ${{ env.DOTNET_ROOT }}
         
       - name: Build
@@ -46,4 +47,5 @@ jobs:
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
         env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           DOTNET_ROOT: ${{ env.DOTNET_ROOT }}
