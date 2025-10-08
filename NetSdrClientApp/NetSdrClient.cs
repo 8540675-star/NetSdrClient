@@ -1,5 +1,7 @@
 ﻿using System.Net;
 using System.Text;
+using NetSdrClientApp.Networking;
+using NetSdrClientApp.Messages;
 
 namespace NetSdrClientApp
 {

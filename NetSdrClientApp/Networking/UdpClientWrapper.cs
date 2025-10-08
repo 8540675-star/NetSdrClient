@@ -2,7 +2,7 @@
 using System.Net.Sockets;
 using System.Security.Cryptography;
 
-namespace NetSdrClientApp
+namespace NetSdrClientApp.Networking
 {
     public class UdpClientWrapper : IUdpClient, IDisposable
     {

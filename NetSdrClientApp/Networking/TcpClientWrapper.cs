@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace NetSdrClientApp
+namespace NetSdrClientApp.Networking
 {
     public class TcpClientWrapper : ITcpClient, IDisposable
     {

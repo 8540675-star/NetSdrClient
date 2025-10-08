@@ -1,4 +1,4 @@
-﻿namespace NetSdrClientApp
+﻿namespace NetSdrClientApp.Networking
 {
     public interface ITcpClient
     {
