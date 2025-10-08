@@ -28,6 +28,7 @@ jobs:
           dotnet new tool-manifest --force
           dotnet tool install dotnet-sonarscanner
           dotnet tool restore
+          echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH  # додаємо шлях до глобальних інструментів
           dotnet-sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
