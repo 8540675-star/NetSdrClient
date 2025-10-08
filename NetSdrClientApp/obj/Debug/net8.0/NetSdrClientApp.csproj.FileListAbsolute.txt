@@ -1,0 +1,15 @@
+C:\NetSdrClient\NetSdrClientApp\bin\Debug\net8.0\NetSdrClientApp.exe
+C:\NetSdrClient\NetSdrClientApp\bin\Debug\net8.0\NetSdrClientApp.deps.json
+C:\NetSdrClient\NetSdrClientApp\bin\Debug\net8.0\NetSdrClientApp.runtimeconfig.json
+C:\NetSdrClient\NetSdrClientApp\bin\Debug\net8.0\NetSdrClientApp.dll
+C:\NetSdrClient\NetSdrClientApp\bin\Debug\net8.0\NetSdrClientApp.pdb
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.AssemblyInfoInputs.cache
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.AssemblyInfo.cs
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.csproj.CoreCompileInputs.cache
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.sourcelink.json
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.dll
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\refint\NetSdrClientApp.dll
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.pdb
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\NetSdrClientApp.genruntimeconfig.cache
+C:\NetSdrClient\NetSdrClientApp\obj\Debug\net8.0\ref\NetSdrClientApp.dll
