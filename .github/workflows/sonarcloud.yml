@@ -28,7 +28,7 @@ jobs:
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.cs.vscoveragexml.reportsPaths="**/TestResults/**/coverage.cobertura.xml" `
+            /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
             /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
@@ -42,7 +42,7 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
         
       - name: Test with Coverage
-        run: dotnet test NetSdrClient.sln --no-build -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        run: dotnet test NetSdrClient.sln --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/coverage.opencover.xml
         
       - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
