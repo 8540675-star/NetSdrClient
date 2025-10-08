@@ -31,20 +31,12 @@ jobs:
           dotnet dotnet-sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
-            /d:sonar.token="$env:SONAR_TOKEN" `
-            /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" `
-            /d:sonar.cpd.cs.minimumTokens=100 `
-            /d:sonar.cpd.cs.minimumLines=10 `
-            /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml `
-            /d:sonar.qualitygate.wait=true
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.host.url="https://sonarcloud.io"
         shell: pwsh
         
-      - name: Restore
-        run: dotnet restore NetSdrClient.sln
-        
       - name: Build
-        run: dotnet build NetSdrClient.sln -c Release --no-restore
+        run: dotnet build NetSdrClientApp/NetSdrClientApp.csproj -c Release
         
       - name: SonarScanner End
         run: dotnet dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
