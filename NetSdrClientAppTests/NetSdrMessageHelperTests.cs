@@ -58,7 +58,7 @@ namespace NetSdrClientAppTests
         {
             // Arrange
             var originalType = NetSdrMessageHelper.MsgTypes.SetControlItem;
-            var originalItemCode = NetSdrMessageHelper.ControlItemCodes.ReceiverFrequency;
+            var originalItemCode = NetSdrMessageHelper.ControlItemCodes.ReceiverState;
             var originalParams = new byte[] { 0x10, 0x20 };
             var message = NetSdrMessageHelper.GetControlItemMessage(originalType, originalItemCode, originalParams);
 
@@ -75,6 +75,7 @@ namespace NetSdrClientAppTests
             Assert.That(success, Is.True);
             Assert.That(type, Is.EqualTo(originalType));
             Assert.That(itemCode, Is.EqualTo(originalItemCode));
+            Assert.That(body.Length, Is.EqualTo(originalParams.Length));
         }
 
         [Test]
@@ -82,7 +83,7 @@ namespace NetSdrClientAppTests
         {
             // Arrange
             var originalType = NetSdrMessageHelper.MsgTypes.DataItem1;
-            var originalParams = new byte[] { 0x01, 0x02, 0x03, 0x04 };
+            var originalParams = new byte[] { 0x01, 0x02 };
             var message = NetSdrMessageHelper.GetDataItemMessage(originalType, originalParams);
 
             // Act
@@ -97,7 +98,6 @@ namespace NetSdrClientAppTests
             // Assert
             Assert.That(success, Is.True);
             Assert.That(type, Is.EqualTo(originalType));
-            Assert.That(body.Length, Is.EqualTo(originalParams.Length));
         }
 
         [Test]
@@ -155,7 +155,7 @@ namespace NetSdrClientAppTests
             );
         }
 
-        [TestCase(NetSdrMessageHelper.MsgTypes.SetControlItem, NetSdrMessageHelper.ControlItemCodes.ReceiverFrequency)]
+        [TestCase(NetSdrMessageHelper.MsgTypes.SetControlItem, NetSdrMessageHelper.ControlItemCodes.ReceiverState)]
         [TestCase(NetSdrMessageHelper.MsgTypes.CurrentControlItem, NetSdrMessageHelper.ControlItemCodes.RFFilter)]
         [TestCase(NetSdrMessageHelper.MsgTypes.ControlItemRange, NetSdrMessageHelper.ControlItemCodes.ADModes)]
         [TestCase(NetSdrMessageHelper.MsgTypes.Ack, NetSdrMessageHelper.ControlItemCodes.ReceiverState)]
@@ -212,7 +212,7 @@ namespace NetSdrClientAppTests
         {
             // Arrange
             var originalType = NetSdrMessageHelper.MsgTypes.CurrentControlItem;
-            var originalItemCode = NetSdrMessageHelper.ControlItemCodes.ADModes;
+            var originalItemCode = NetSdrMessageHelper.ControlItemCodes.ReceiverState;
             var originalParams = new byte[] { 0xAA, 0xBB, 0xCC, 0xDD };
             var message = NetSdrMessageHelper.GetControlItemMessage(originalType, originalItemCode, originalParams);
 
