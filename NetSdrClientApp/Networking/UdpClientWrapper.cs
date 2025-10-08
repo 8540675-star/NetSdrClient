@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -13,7 +13,7 @@ namespace NetSdrClientApp.Networking
         private readonly IPEndPoint _localEndPoint;
         private CancellationTokenSource? _cts;
         private UdpClient? _udpClient;
-
+        
         public event EventHandler<byte[]>? MessageReceived;
 
         public UdpClientWrapper(int port)
@@ -25,7 +25,6 @@ namespace NetSdrClientApp.Networking
         {
             _cts = new CancellationTokenSource();
             Console.WriteLine("Start listening for UDP messages...");
-
             try
             {
                 _udpClient = new UdpClient(_localEndPoint);
@@ -33,7 +32,6 @@ namespace NetSdrClientApp.Networking
                 {
                     UdpReceiveResult result = await _udpClient.ReceiveAsync(_cts.Token);
                     MessageReceived?.Invoke(this, result.Buffer);
-
                     Console.WriteLine($"Received from {result.RemoteEndPoint}");
                 }
             }
@@ -49,19 +47,16 @@ namespace NetSdrClientApp.Networking
 
         public void StopListening()
         {
-            try
-            {
-                _cts?.Cancel();
-                _udpClient?.Close();
-                Console.WriteLine("Stopped listening for UDP messages.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error while stopping: {ex.Message}");
-            }
+            StopListeningInternal();
         }
 
         public void Exit()
+        {
+            StopListeningInternal();
+        }
+
+        // Method to stop the UDP client and cancel the listening task
+        private void StopListeningInternal()
         {
             try
             {
@@ -78,10 +73,8 @@ namespace NetSdrClientApp.Networking
         public override int GetHashCode()
         {
             var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
-
             using var md5 = MD5.Create();
             var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
-
             return BitConverter.ToInt32(hash, 0);
         }
 
@@ -97,10 +90,17 @@ namespace NetSdrClientApp.Networking
 
         public void Dispose()
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _udpClient?.Close();
-            _udpClient?.Dispose();
+            try
+            {
+                _cts?.Cancel();
+                _cts?.Dispose();
+                _udpClient?.Close();
+                _udpClient?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error disposing resources: {ex.Message}");
+            }
         }
     }
 }
