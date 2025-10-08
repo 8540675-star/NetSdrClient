@@ -28,7 +28,6 @@ jobs:
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.coverageReportPaths="**/TestResults/**/coverage.cobertura.xml" `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
             /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
@@ -44,6 +43,15 @@ jobs:
       - name: Test with Coverage
         run: dotnet test NetSdrClient.sln --no-build -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
         
+      - name: Prepare Coverage for SonarCloud
+        run: |
+          $coverageFile = Get-ChildItem -Path ./TestResults -Recurse -Filter "coverage.cobertura.xml" | Select-Object -First 1
+          if ($coverageFile) {
+            Write-Host "Found coverage file: $($coverageFile.FullName)"
+            echo "COVERAGE_FILE=$($coverageFile.FullName)" >> $env:GITHUB_ENV
+          }
+        shell: pwsh
+
       - name: SonarScanner End
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.coverageReportPaths="${{ env.COVERAGE_FILE }}"
         shell: pwsh
