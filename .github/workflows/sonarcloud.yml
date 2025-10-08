@@ -33,7 +33,7 @@ jobs:
           dotnet sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.token="$env:SONAR_TOKEN" `
             /d:sonar.host.url="https://sonarcloud.io"
         shell: pwsh
         env:
