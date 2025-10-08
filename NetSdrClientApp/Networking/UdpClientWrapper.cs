@@ -1,107 +1,85 @@
-﻿using System.Net;
+﻿using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace NetSdrClientApp.Networking
+public class UdpClientWrapper : IUdpClient
 {
-    public class UdpClientWrapper : IUdpClient, IDisposable
+    private readonly IPEndPoint _localEndPoint;
+    private CancellationTokenSource? _cts;
+    private UdpClient? _udpClient;
+
+    public event EventHandler<byte[]>? MessageReceived;
+
+    public UdpClientWrapper(int port)
     {
-        private UdpClient? _client;
-        private IPEndPoint? _remoteEndpoint;
-        private Task? _receiveTask;
-        private CancellationTokenSource? _cts;
+        _localEndPoint = new IPEndPoint(IPAddress.Any, port);
+    }
 
-        public event EventHandler<byte[]>? MessageReceived;
+    public async Task StartListeningAsync()
+    {
+        _cts = new CancellationTokenSource();
+        Console.WriteLine("Start listening for UDP messages...");
 
-        public void Connect(string host, int port)
+        try
         {
-            _client = new UdpClient();
-            _remoteEndpoint = new IPEndPoint(IPAddress.Parse(host), port);
-            _client.Connect(_remoteEndpoint);
-
-            _cts = new CancellationTokenSource();
-            _receiveTask = Task.Run(() => ReceiveLoop(_cts.Token));
-        }
-
-        private void ReceiveLoop(CancellationToken cancellationToken)
-        {
-            if (_client == null) return;
-
-            while (!cancellationToken.IsCancellationRequested)
+            _udpClient = new UdpClient(_localEndPoint);
+            while (!_cts.Token.IsCancellationRequested)
             {
-                try
-                {
-                    IPEndPoint remoteEp = new IPEndPoint(IPAddress.Any, 0);
-                    byte[] receivedData = _client.Receive(ref remoteEp);
-                    MessageReceived?.Invoke(this, receivedData);
-                }
-                catch (SocketException)
-                {
-                    // Socket closed or error
-                    break;
-                }
+                UdpReceiveResult result = await _udpClient.ReceiveAsync(_cts.Token);
+                MessageReceived?.Invoke(this, result.Buffer);
+
+                Console.WriteLine($"Received from {result.RemoteEndPoint}");
             }
         }
-
-        public void Send(byte[] data)
+        catch (OperationCanceledException ex)
         {
-            if (_client == null)
-            {
-                throw new InvalidOperationException("Not connected");
-            }
-
-            _client.Send(data, data.Length);
+            //empty
         }
-
-        public async Task<byte[]> ReceiveAsync()
+        catch (Exception ex)
         {
-            if (_client == null)
-            {
-                throw new InvalidOperationException("Not connected");
-            }
-
-            var result = await _client.ReceiveAsync();
-            return result.Buffer;
+            Console.WriteLine($"Error receiving message: {ex.Message}");
         }
+    }
 
-        public void Close()
+    public void StopListening()
+    {
+        try
         {
             _cts?.Cancel();
-            _receiveTask?.Wait();
-            _client?.Close();
-            _client = null;
+            _udpClient?.Close();
+            Console.WriteLine("Stopped listening for UDP messages.");
         }
-
-        public override int GetHashCode()
+        catch (Exception ex)
         {
-            if (_client == null || _remoteEndpoint == null)
-            {
-                return base.GetHashCode();
-            }
-
-            // Using SHA256 for demonstration purposes only
-            // In production, consider if cryptographic hash is necessary
-            using (var sha256 = SHA256.Create())
-            {
-                var hashInput = $"{_remoteEndpoint.Address}:{_remoteEndpoint.Port}";
-                var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hashInput));
-                return BitConverter.ToInt32(hashBytes, 0);
-            }
+            Console.WriteLine($"Error while stopping: {ex.Message}");
         }
+    }
 
-        public override bool Equals(object? obj)
+    public void Exit()
+    {
+        try
         {
-            if (obj is UdpClientWrapper other)
-            {
-                return _remoteEndpoint?.Equals(other._remoteEndpoint) ?? false;
-            }
-            return false;
+            _cts?.Cancel();
+            _udpClient?.Close();
+            Console.WriteLine("Stopped listening for UDP messages.");
         }
-
-        public void Dispose()
+        catch (Exception ex)
         {
-            _cts?.Dispose();
-            _client?.Dispose();
+            Console.WriteLine($"Error while stopping: {ex.Message}");
         }
+    }
+
+    public override int GetHashCode()
+    {
+        var payload = $"{nameof(UdpClientWrapper)}|{_localEndPoint.Address}|{_localEndPoint.Port}";
+
+        using var md5 = MD5.Create();
+        var hash = md5.ComputeHash(Encoding.UTF8.GetBytes(payload));
+
+        return BitConverter.ToInt32(hash, 0);
     }
 }

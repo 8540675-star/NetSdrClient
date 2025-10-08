@@ -1,16 +1,24 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Http;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace NetSdrClientApp.Networking
 {
-    public class TcpClientWrapper : ITcpClient, IDisposable
+    public class TcpClientWrapper : ITcpClient
     {
-        private TcpClient? _client;
+        private string _host;
+        private int _port;
+        private TcpClient? _tcpClient;
         private NetworkStream? _stream;
-        private readonly string _host;
-        private readonly int _port;
+        private CancellationTokenSource _cts;
 
-        private Task? _receiveTask;
-        private CancellationTokenSource _cts = new();
+        public bool Connected => _tcpClient != null && _tcpClient.Connected && _stream != null;
 
         public event EventHandler<byte[]>? MessageReceived;
 
@@ -20,66 +28,113 @@ namespace NetSdrClientApp.Networking
             _port = port;
         }
 
-        public void Connect(string host, int port)
+        public void Connect()
         {
-            _client = new TcpClient();
-            _client.Connect(host, port);
-            _stream = _client.GetStream();
-
-            _cts = new CancellationTokenSource();
-            _receiveTask = Task.Run(() => ReceiveLoop(_cts.Token));
-        }
-
-        public void Send(byte[] data)
-        {
-            if (_stream == null)
+            if (Connected)
             {
-                throw new InvalidOperationException("Not connected");
+                Console.WriteLine($"Already connected to {_host}:{_port}");
+                return;
             }
 
-            _stream.Write(data, 0, data.Length);
-        }
-
-        public void Close()
-        {
-            _cts?.Cancel();
-            _receiveTask?.Wait();
-            _stream?.Close();
-            _client?.Close();
-            _stream = null;
-            _client = null;
-        }
-
-        private void ReceiveLoop(CancellationToken cancellationToken)
-        {
-            if (_stream == null) return;
-
-            byte[] buffer = new byte[4096];
+            _tcpClient = new TcpClient();
 
             try
             {
-                while (!cancellationToken.IsCancellationRequested && _stream.CanRead)
-                {
-                    int bytesRead = _stream.Read(buffer, 0, buffer.Length);
-                    if (bytesRead > 0)
-                    {
-                        byte[] message = new byte[bytesRead];
-                        Array.Copy(buffer, message, bytesRead);
-                        MessageReceived?.Invoke(this, message);
-                    }
-                }
+                _cts = new CancellationTokenSource();
+                _tcpClient.Connect(_host, _port);
+                _stream = _tcpClient.GetStream();
+                Console.WriteLine($"Connected to {_host}:{_port}");
+                _ = StartListeningAsync();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Connection closed or error occurred
+                Console.WriteLine($"Failed to connect: {ex.Message}");
             }
         }
 
-        public void Dispose()
+        public void Disconnect()
         {
-            _cts?.Dispose();
-            _stream?.Dispose();
-            _client?.Dispose();
+            if (Connected)
+            {
+                _cts?.Cancel();
+                _stream?.Close();
+                _tcpClient?.Close();
+
+                _cts = null;
+                _tcpClient = null;
+                _stream = null;
+                Console.WriteLine("Disconnected.");
+            }
+            else
+            {
+                Console.WriteLine("No active connection to disconnect.");
+            }
+        }
+
+        public async Task SendMessageAsync(byte[] data)
+        {
+            if (Connected && _stream != null && _stream.CanWrite)
+            {
+                Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
+                await _stream.WriteAsync(data, 0, data.Length);
+            }
+            else
+            {
+                throw new InvalidOperationException("Not connected to a server.");
+            }
+        }
+
+        public async Task SendMessageAsync(string str)
+        {
+            var data = Encoding.UTF8.GetBytes(str);
+            if (Connected && _stream != null && _stream.CanWrite)
+            {
+                Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
+                await _stream.WriteAsync(data, 0, data.Length);
+            }
+            else
+            {
+                throw new InvalidOperationException("Not connected to a server.");
+            }
+        }
+
+        private async Task StartListeningAsync()
+        {
+            if (Connected && _stream != null && _stream.CanRead)
+            {
+                try
+                {
+                    Console.WriteLine($"Starting listening for incomming messages.");
+
+                    while (!_cts.Token.IsCancellationRequested)
+                    {
+                        byte[] buffer = new byte[8194];
+
+                        int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
+                        if (bytesRead > 0)
+                        {
+                            MessageReceived?.Invoke(this, buffer.AsSpan(0, bytesRead).ToArray());
+                        }
+                    }
+                }
+                catch (OperationCanceledException ex)
+                {
+                    //empty
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error in listening loop: {ex.Message}");
+                }
+                finally
+                {
+                    Console.WriteLine("Listener stopped.");
+                }
+            }
+            else
+            {
+                throw new InvalidOperationException("Not connected to a server.");
+            }
         }
     }
+
 }
