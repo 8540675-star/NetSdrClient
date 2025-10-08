@@ -28,8 +28,7 @@ jobs:
           dotnet new tool-manifest --force
           dotnet tool install dotnet-sonarscanner
           dotnet tool restore
-          echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH  # додаємо шлях до глобальних інструментів
-          dotnet-sonarscanner begin `
+          dotnet tool run dotnet-sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
@@ -48,5 +47,5 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
         
       - name: SonarScanner End
-        run: dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet tool run dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
