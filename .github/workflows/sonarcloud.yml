@@ -23,29 +23,29 @@ jobs:
         with:
           dotnet-version: '8.0.x'
           
-      - name: Install SonarScanner
-        run: |
-          dotnet tool install --global dotnet-sonarscanner
-        shell: pwsh
-          
       - name: SonarScanner Begin
         run: |
-          dotnet sonarscanner begin `
+          dotnet new tool-manifest --force
+          dotnet tool install dotnet-sonarscanner
+          dotnet tool restore
+          dotnet dotnet-sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
-            /d:sonar.token="$env:SONAR_TOKEN" `
-            /d:sonar.host.url="https://sonarcloud.io"
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+            /d:sonar.host.url="https://sonarcloud.io" `
+            /d:sonar.cs.opencover.reportsPaths="**/coverage.xml" `
+            /d:sonar.cpd.cs.minimumTokens=40 `
+            /d:sonar.cpd.cs.minimumLines=5 `
+            /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml `
+            /d:sonar.qualitygate.wait=true
         shell: pwsh
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          DOTNET_ROOT: ${{ env.DOTNET_ROOT }}
+        
+      - name: Restore
+        run: dotnet restore NetSdrClient.sln
         
       - name: Build
-        run: dotnet build NetSdrClientApp/NetSdrClientApp.csproj -c Release
+        run: dotnet build NetSdrClient.sln -c Release --no-restore
         
       - name: SonarScanner End
-        run: dotnet sonarscanner end /d:sonar.token="$env:SONAR_TOKEN"
+        run: dotnet dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          DOTNET_ROOT: ${{ env.DOTNET_ROOT }}
