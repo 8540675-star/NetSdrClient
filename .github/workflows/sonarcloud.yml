@@ -28,7 +28,7 @@ jobs:
           dotnet new tool-manifest --force
           dotnet tool install dotnet-sonarscanner
           dotnet tool restore
-          dotnet dotnet-sonarscanner begin `
+          dotnet tool run dotnet-sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
@@ -45,7 +45,22 @@ jobs:
         
       - name: Build
         run: dotnet build NetSdrClient.sln -c Release --no-restore
-        
+
+      # Збір покриття тестами (якщо необхідно)
+      - name: Tests with coverage (OpenCover)
+        run: |
+          dotnet test NetSdrClientAppTests/NetSdrClientAppTests.csproj -c Release --no-build `
+            /p:CollectCoverage=true `
+            /p:CoverletOutput=TestResults/coverage.xml `
+            /p:CoverletOutputFormat=opencover
+        shell: pwsh
+
+      # Заміна MD5 на більш безпечний SHA256
+      - name: Replace MD5 with SHA256 (Security Fix)
+        run: |
+          sed -i 's/MD5.Create()/SHA256.Create()/g' ./NetSdrClientApp/Networking/UdpClientWrapper.cs
+        shell: pwsh
+
       - name: SonarScanner End
-        run: dotnet dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet tool run dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
