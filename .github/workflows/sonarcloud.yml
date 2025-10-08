@@ -1,9 +1,9 @@
 name: SonarCloud analysis
 on:
   push:
-    branches: [ "master" ]  # або "main" - перевір свою гілку!
+    branches: [ "main" ]  
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
   workflow_dispatch:
 permissions:
   pull-requests: read
