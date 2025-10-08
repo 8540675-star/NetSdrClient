@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.IO;
-using System.Linq;
-using System.Net.Http;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
@@ -17,9 +14,8 @@ namespace NetSdrClientApp.Networking
         private TcpClient? _tcpClient;
         private NetworkStream? _stream;
         private CancellationTokenSource? _cts;
-
+        
         public bool Connected => _tcpClient != null && _tcpClient.Connected && _stream != null;
-
         public event EventHandler<byte[]>? MessageReceived;
 
         public TcpClientWrapper(string host, int port)
@@ -37,7 +33,6 @@ namespace NetSdrClientApp.Networking
             }
 
             _tcpClient = new TcpClient();
-
             try
             {
                 _cts = new CancellationTokenSource();
@@ -49,8 +44,7 @@ namespace NetSdrClientApp.Networking
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to connect: {ex.Message}");
-                _cts?.Dispose();
-                _cts = null;
+                DisposeResources();
             }
         }
 
@@ -58,14 +52,7 @@ namespace NetSdrClientApp.Networking
         {
             if (Connected)
             {
-                _cts?.Cancel();
-                _stream?.Close();
-                _tcpClient?.Close();
-                _cts?.Dispose();
-
-                _cts = null;
-                _tcpClient = null;
-                _stream = null;
+                DisposeResources();
                 Console.WriteLine("Disconnected.");
             }
             else
@@ -74,11 +61,22 @@ namespace NetSdrClientApp.Networking
             }
         }
 
+        private void DisposeResources()
+        {
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _stream?.Close();
+            _tcpClient?.Close();
+            _cts = null;
+            _tcpClient = null;
+            _stream = null;
+        }
+
         public async Task SendMessageAsync(byte[] data)
         {
             if (Connected && _stream != null && _stream.CanWrite)
             {
-                Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
+                Console.WriteLine($"Message sent: {BitConverter.ToString(data)}");
                 await _stream.WriteAsync(data, 0, data.Length);
             }
             else
@@ -90,15 +88,7 @@ namespace NetSdrClientApp.Networking
         public async Task SendMessageAsync(string str)
         {
             var data = Encoding.UTF8.GetBytes(str);
-            if (Connected && _stream != null && _stream.CanWrite)
-            {
-                Console.WriteLine($"Message sent: " + data.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
-                await _stream.WriteAsync(data, 0, data.Length);
-            }
-            else
-            {
-                throw new InvalidOperationException("Not connected to a server.");
-            }
+            await SendMessageAsync(data);
         }
 
         private async Task StartListeningAsync()
@@ -107,12 +97,10 @@ namespace NetSdrClientApp.Networking
             {
                 try
                 {
-                    Console.WriteLine($"Starting listening for incomming messages.");
-
+                    Console.WriteLine("Starting listening for incoming messages.");
                     while (_cts != null && !_cts.Token.IsCancellationRequested)
                     {
                         byte[] buffer = new byte[8194];
-
                         int bytesRead = await _stream.ReadAsync(buffer, 0, buffer.Length, _cts.Token);
                         if (bytesRead > 0)
                         {
@@ -122,7 +110,7 @@ namespace NetSdrClientApp.Networking
                 }
                 catch (OperationCanceledException)
                 {
-                    //empty
+                    // Empty catch block to handle cancellation
                 }
                 catch (Exception ex)
                 {
