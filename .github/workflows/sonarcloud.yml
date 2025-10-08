@@ -22,7 +22,7 @@ jobs:
       - name: Restore
         run: dotnet restore NetSdrClient.sln
         
-      - name: Test with Coverage (before build for coverage file)
+      - name: Test with Coverage
         run: dotnet test NetSdrClient.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
         
       - name: Prepare Coverage for SonarCloud
@@ -32,6 +32,13 @@ jobs:
             Write-Host "Found coverage file: $($coverageFile.FullName)"
             echo "COVERAGE_FILE=$($coverageFile.FullName)" >> $env:GITHUB_ENV
           }
+        shell: pwsh
+        
+      - name: Convert Coverage to SonarQube format
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator "-reports:${{ env.COVERAGE_FILE }}" "-targetdir:./CoverageReport" "-reporttypes:SonarQube"
+          echo "SONAR_COVERAGE_FILE=./CoverageReport/SonarQube.xml" >> $env:GITHUB_ENV
         shell: pwsh
           
       - name: SonarScanner Begin
@@ -43,7 +50,7 @@ jobs:
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.coverageReportPaths="${{ env.COVERAGE_FILE }}" `
+            /d:sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_FILE }}" `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
             /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
