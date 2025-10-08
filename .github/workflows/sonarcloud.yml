@@ -28,7 +28,7 @@ jobs:
           dotnet new tool-manifest --force
           dotnet tool install dotnet-sonarscanner
           dotnet tool restore
-          dotnet tool run dotnet-sonarscanner begin `
+          dotnet dotnet-sonarscanner begin `
             /k:"8540675-star_NetSdrClient" `
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
@@ -47,5 +47,5 @@ jobs:
         run: dotnet build NetSdrClient.sln -c Release --no-restore
         
       - name: SonarScanner End
-        run: dotnet tool run dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+        run: dotnet dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
