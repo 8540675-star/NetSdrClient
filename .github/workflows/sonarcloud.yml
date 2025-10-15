@@ -51,7 +51,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_FILE }}" `
-            /d:sonar.coverage.exclusions=**/Program.cs ` # <-- ОСЬ ЦЕЙ РЯДОК МИ ДОДАЛИ
+            /d:sonar.coverage.exclusions=**/Program.cs ` # <-- ОСЬ ТУТ ТЕПЕР Є СИМВОЛ `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
             /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
