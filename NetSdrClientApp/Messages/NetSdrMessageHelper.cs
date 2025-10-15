@@ -100,23 +100,25 @@ namespace NetSdrClientApp.Messages
             }
 
             body = msgEnumarable.ToArray();
-
             success &= body.Length == msgLength;
-
             return success;
         }
 
         public static IEnumerable<int> GetSamples(ushort sampleSize, byte[] body)
         {
             sampleSize /= 8; //to bytes
-            if (sampleSize  > 4)
+            if (sampleSize > 4)
             {
-                throw new ArgumentOutOfRangeException();
+                throw new ArgumentOutOfRangeException(nameof(sampleSize), "Sample size cannot exceed 4 bytes.");
             }
-
+            return GetSamplesIterator(sampleSize, body);
+        }
+ 
+        private static IEnumerable<int> GetSamplesIterator(ushort sampleSize, byte[] body)
+        {
             var bodyEnumerable = body as IEnumerable<byte>;
             var prefixBytes = Enumerable.Range(0, 4 - sampleSize)
-                                      .Select(b => (byte)0);
+                                        .Select(b => (byte)0);
 
             while (bodyEnumerable.Count() >= sampleSize)
             {
@@ -132,7 +134,6 @@ namespace NetSdrClientApp.Messages
         {
             int lengthWithHeader = msgLength + 2;
 
-            //Data Items edge case
             if (type >= MsgTypes.DataItem0 && lengthWithHeader == _maxDataItemMessageLength)
             {
                 lengthWithHeader = 0;
