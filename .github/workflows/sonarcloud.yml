@@ -22,14 +22,16 @@ jobs:
       - name: Restore
         run: dotnet restore NetSdrClient.sln
         
+      # ВИПРАВЛЕНО: Чітко вказуємо, куди зберігати звіт
       - name: Test with Coverage
-        run: dotnet test NetSdrClient.sln --collect:"XPlat Code Coverage" --results-directory "TestResults" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+        run: dotnet test NetSdrClient.sln --logger trx --results-directory "TestResults" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=./TestResults/coverage.opencover.xml
         
       - name: SonarScanner Begin
         run: |
           dotnet tool install --global dotnet-sonarscanner
           echo "$env:USERPROFILE\.dotnet\tools" >> $env:GITHUB_PATH
-          dotnet sonarscanner begin /k:"8540675-star_NetSdrClient" /o:"8540675-star" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" /d:sonar.coverage.exclusions="**/Program.cs" /d:sonar.exclusions="**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/**" /d:sonar.qualitygate.wait=false
+          # ВИПРАВЛЕНО: Чітко вказуємо, звідки брати звіт
+          dotnet sonarscanner begin /k:"8540675-star_NetSdrClient" /o:"8540675-star" /d:sonar.token="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="TestResults/coverage.opencover.xml" /d:sonar.coverage.exclusions="**/Program.cs" /d:sonar.exclusions="**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/**" /d:sonar.qualitygate.wait=false
         shell: pwsh
         
       - name: Build
