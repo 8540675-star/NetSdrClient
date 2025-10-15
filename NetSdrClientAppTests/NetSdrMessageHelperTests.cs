@@ -1,4 +1,5 @@
 using NetSdrClientApp.Messages;
+using static NetSdrClientApp.Messages.NetSdrMessageHelper;
 
 namespace NetSdrClientAppTests
 {
@@ -237,5 +238,109 @@ namespace NetSdrClientAppTests
             Assert.That(body, Is.EqualTo(originalParams));
         }
         */
+
+        // ## НОВІ ТЕСТИ ДЛЯ ЛАБОРАТОРНОЇ №3 ##
+        
+        // Тест 1: Перевіряємо, чи розбирається повідомлення правильно
+        [Test]
+        public void TranslateMessage_ControlItemMessage_ParsesCorrectly()
+        {
+            // Arrange (Створюємо "правильне" повідомлення вручну)
+            var originalType = MsgTypes.CurrentControlItem;
+            var originalItemCode = ControlItemCodes.RFFilter;
+            var originalParams = new byte[] { 1, 0 };
+            var message = NetSdrMessageHelper.GetControlItemMessage(originalType, originalItemCode, originalParams);
+
+            // Act
+            var success = NetSdrMessageHelper.TranslateMessage(message, out var type, out var itemCode, out var seqNum, out var body);
+
+            // Assert
+            Assert.IsTrue(success);
+            Assert.That(type, Is.EqualTo(originalType));
+            Assert.That(itemCode, Is.EqualTo(originalItemCode));
+            Assert.That(body, Is.EqualTo(originalParams));
+        }
+        
+        // Тест 2: Перевіряємо, чи розбирається повідомлення з даними правильно
+        [Test]
+        public void TranslateMessage_DataItemMessage_ParsesSequenceNumberCorrectly()
+        {
+            // Arrange (Створюємо повідомлення з даними та номером послідовності)
+            var header = new byte[] { 0x07, 0xA0 }; // Довжина 7, тип DataItem1
+            var sequence = new byte[] { 0x34, 0x12 }; // Номер 0x1234
+            var bodyParams = new byte[] { 1, 2, 3, 4, 5 };
+            var message = header.Concat(sequence).Concat(bodyParams).ToArray();
+            
+            // Act
+            var success = NetSdrMessageHelper.TranslateMessage(message, out var type, out var itemCode, out var seqNum, out var body);
+            
+            // Assert
+            Assert.IsTrue(success);
+            Assert.That(type, Is.EqualTo(MsgTypes.DataItem1));
+            Assert.That(seqNum, Is.EqualTo(0x1234));
+            Assert.That(body, Is.EqualTo(bodyParams));
+        }
+
+        // Тест 3: Перевіряємо, що для порожнього тіла повертається порожня колекція семплів
+        [Test]
+        public void GetSamples_EmptyBody_ReturnsEmptyCollection()
+        {
+            // Arrange
+            var body = Array.Empty<byte>();
+
+            // Act
+            var samples = NetSdrMessageHelper.GetSamples(16, body);
+
+            // Assert
+            Assert.IsNotNull(samples);
+            Assert.IsEmpty(samples);
+        }
+        
+        // Тест 4: Перевіряємо, що повідомлення з неправильною довжиною не проходить перевірку
+        [Test]
+        public void TranslateMessage_InvalidLength_ReturnsFalse()
+        {
+            // Arrange (Заголовок каже, що довжина 5, а насправді вона 4)
+            var message = new byte[] { 0x05, 0x00, 0x01, 0x02 }; 
+
+            // Act
+            var success = NetSdrMessageHelper.TranslateMessage(message, out _, out _, out _, out _);
+
+            // Assert
+            Assert.IsFalse(success);
+        }
+
+        // Тест 5: Перевіряємо, що повідомлення з невідомим кодом контролю не проходить перевірку
+        [Test]
+        public void TranslateMessage_UnknownControlItemCode_ReturnsFalse()
+        {
+            // Arrange
+            var type = MsgTypes.SetControlItem;
+            var unknownItemCode = new byte[] { 0xFF, 0xFF }; // Неіснуючий код
+            var parameters = new byte[] { 1, 2 };
+            var header = BitConverter.GetBytes((ushort)(6 + ((int)type << 13))); // 2(h)+2(c)+2(p) = 6
+            var message = header.Concat(unknownItemCode).Concat(parameters).ToArray();
+
+            // Act
+            var success = NetSdrMessageHelper.TranslateMessage(message, out _, out var itemCode, out _, out _);
+
+            // Assert
+            Assert.IsFalse(success);
+            Assert.That(itemCode, Is.EqualTo(ControlItemCodes.None));
+        }
+
+        // Тест 6: Перевіряємо коректність роботи з максимальними значеннями довжини повідомлення
+        [Test]
+        public void GetControlItemMessage_WithMaxParameters_ShouldNotThrowException()
+        {
+            // Arrange
+            var type = MsgTypes.Ack;
+            var code = ControlItemCodes.ReceiverState;
+            // 8191 (max) - 2 (header) - 2 (code) = 8187
+            var parameters = new byte[8187]; 
+
+            // Act & Assert
+            Assert.DoesNotThrow(() => NetSdrMessageHelper.GetControlItemMessage(type, code, parameters));
+        }
     }
 }
