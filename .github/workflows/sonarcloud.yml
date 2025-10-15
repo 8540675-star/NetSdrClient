@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-          
+        
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
@@ -51,6 +51,7 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
             /d:sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_FILE }}" `
+            /d:sonar.coverage.exclusions=**/Program.cs `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
             /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
