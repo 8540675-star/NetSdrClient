@@ -45,6 +45,7 @@ public class NetSdrClientTests
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Exactly(3));
     }
 
+    // ВИПРАВЛЕНО: прибрано 'async Task', бо тест не є асинхронним
     [Test]
     public void DisconnectWithNoConnectionTest()
     {
@@ -54,9 +55,10 @@ public class NetSdrClientTests
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
     }
-
+    
+    // ВИПРАВЛЕНО: прибрано 'async Task', бо тест не є асинхронним
     [Test]
-    public async Task DisconnectTest()
+    public void DisconnectTest()
     {
         //Arrange 
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
@@ -107,7 +109,6 @@ public class NetSdrClientTests
         Assert.That(_client.IQStarted, Is.False);
     }
 
-    // НОВИЙ ТЕСТ для підвищення покриття (Coverage)
     [Test]
     public async Task ChangeFrequencyAsync_ShouldSendMessage_WhenConnected()
     {
@@ -119,5 +120,21 @@ public class NetSdrClientTests
 
         // Assert
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Once());
+    }
+
+    // НОВИЙ ТЕСТ для підвищення покриття (Coverage)
+    [Test]
+    public async Task StopIQAsync_ShouldDoNothing_WhenNotConnected()
+    {
+        // Arrange
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(false);
+
+        // Act
+        await _client.StopIQAsync();
+
+        // Assert
+        // Перевіряємо, що ніякі дії не були виконані
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+        _udpMock.Verify(udp => udp.StopListening(), Times.Never);
     }
 }
