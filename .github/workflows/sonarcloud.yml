@@ -25,7 +25,6 @@ jobs:
       - name: Test with Coverage
         run: dotnet test NetSdrClient.sln --collect:"XPlat Code Coverage" --results-directory "TestResults" --logger "console;verbosity=detailed" /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
         
-      
       - name: SonarScanner Begin
         run: |
           dotnet tool install --global dotnet-sonarscanner
@@ -35,7 +34,6 @@ jobs:
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            # КРОК 3: Ми вказуємо Sonar новий шлях до звіту
             /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.opencover.xml" `
             /d:sonar.coverage.exclusions="**/Program.cs" `
             /d:sonar.cpd.cs.minimumTokens=40 `
