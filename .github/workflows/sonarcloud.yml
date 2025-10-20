@@ -38,7 +38,12 @@ jobs:
             /d:sonar.coverage.exclusions=**/Program.cs `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
+<<<<<<< HEAD
             /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/**
+=======
+            /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
+            /d:sonar.qualitygate.wait=true
+>>>>>>> a22326d0231c5904268c81f898929740f8db72fe
         shell: pwsh
         
       - name: Build
