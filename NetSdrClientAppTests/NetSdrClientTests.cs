@@ -1,4 +1,4 @@
-﻿using Moq;
+using Moq;
 using NetSdrClientApp;
 using NetSdrClientApp.Networking;
 
@@ -18,19 +18,16 @@ public class NetSdrClientTests
         {
             _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
         });
-
         _tcpMock.Setup(tcp => tcp.Disconnect()).Callback(() =>
         {
             _tcpMock.Setup(tcp => tcp.Connected).Returns(false);
         });
-
         _tcpMock.Setup(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>())).Callback<byte[]>((bytes) =>
         {
             _tcpMock.Raise(tcp => tcp.MessageReceived += null, _tcpMock.Object, bytes);
         });
 
         _udpMock = new Mock<IUdpClient>();
-
         _client = new NetSdrClient(_tcpMock.Object, _udpMock.Object);
     }
 
@@ -39,33 +36,27 @@ public class NetSdrClientTests
     {
         //act
         await _client.ConnectAsync();
-
         //assert
         _tcpMock.Verify(tcp => tcp.Connect(), Times.Once);
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Exactly(3));
     }
 
-    // ВИПРАВЛЕНО: прибрано 'async Task', бо тест не є асинхронним
     [Test]
-    public void DisconnectWithNoConnectionTest()
+    public async Task DisconnectWithNoConnectionTest()
     {
         //act
-        _client.Disconnect();
-
+        await _client.DisconnectAsync();
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
     }
     
-    // ВИПРАВЛЕНО: прибрано 'async Task', бо тест не є асинхронним
     [Test]
-    public void DisconnectTest()
+    public async Task DisconnectTest()
     {
         //Arrange 
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
-
         //act
-        _client.Disconnect();
-
+        await _client.DisconnectAsync();
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
     }
@@ -75,7 +66,6 @@ public class NetSdrClientTests
     {
         //act
         await _client.StartIQAsync();
-
         //assert
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
         _tcpMock.VerifyGet(tcp => tcp.Connected, Times.AtLeastOnce);
@@ -86,10 +76,8 @@ public class NetSdrClientTests
     {
         //Arrange 
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
-
         //act
         await _client.StartIQAsync();
-
         //assert
         _udpMock.Verify(udp => udp.StartListeningAsync(), Times.Once);
         Assert.That(_client.IQStarted, Is.True);
@@ -100,10 +88,8 @@ public class NetSdrClientTests
     {
         //Arrange 
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
-
         //act
         await _client.StopIQAsync();
-
         //assert
         _udpMock.Verify(udp => udp.StopListening(), Times.Once);
         Assert.That(_client.IQStarted, Is.False);
@@ -114,26 +100,20 @@ public class NetSdrClientTests
     {
         // Arrange
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
-
         // Act
         await _client.ChangeFrequencyAsync(20000000, 1);
-
         // Assert
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Once());
     }
 
-    // НОВИЙ ТЕСТ для підвищення покриття (Coverage)
     [Test]
     public async Task StopIQAsync_ShouldDoNothing_WhenNotConnected()
     {
         // Arrange
         _tcpMock.Setup(tcp => tcp.Connected).Returns(false);
-
         // Act
         await _client.StopIQAsync();
-
         // Assert
-        // Перевіряємо, що ніякі дії не були виконані
         _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
         _udpMock.Verify(udp => udp.StopListening(), Times.Never);
     }
