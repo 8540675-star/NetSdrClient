@@ -113,40 +113,6 @@ namespace NetSdrClientApp
             await SendTcpRequest(msg);
         }
 
-        // Duplicate method 1 - для демонстрації
-        public void LogConnectionStatus()
-        {
-            if (_tcpClient.Connected)
-            {
-                Console.WriteLine("Connected to server");
-                Console.WriteLine("Connection is active");
-                Console.WriteLine("Ready to send data");
-            }
-            else
-            {
-                Console.WriteLine("Not connected");
-                Console.WriteLine("Connection is inactive");
-                Console.WriteLine("Cannot send data");
-            }
-        }
-
-        // Duplicate method 2 - дублікат для демонстрації
-        public void CheckConnectionState()
-        {
-            if (_tcpClient.Connected)
-            {
-                Console.WriteLine("Connected to server");
-                Console.WriteLine("Connection is active");
-                Console.WriteLine("Ready to send data");
-            }
-            else
-            {
-                Console.WriteLine("Not connected");
-                Console.WriteLine("Connection is inactive");
-                Console.WriteLine("Cannot send data");
-            }
-        }
-
         private void _udpClient_MessageReceived(object? sender, byte[] e)
         {
             NetSdrMessageHelper.TranslateMessage(e, out _, out _, out _, out byte[] body);
