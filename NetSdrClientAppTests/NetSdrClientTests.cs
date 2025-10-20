@@ -50,7 +50,7 @@ public class NetSdrClientTests
     public void DisconnectWithNoConnectionTest()
     {
         //act
-        _client.Disconect();
+        _client.Disconnect();
 
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
@@ -64,7 +64,7 @@ public class NetSdrClientTests
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
 
         //act
-        _client.Disconect();
+        _client.Disconnect();
 
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
