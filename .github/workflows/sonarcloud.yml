@@ -3,13 +3,10 @@ on:
   push:
     branches: [ "main" ]  
   pull_request:
-    types: [opened, synchronize, reopened]
     branches: [ "main" ]
   workflow_dispatch:
-
 permissions:
   pull-requests: read
-
 jobs:
   sonar-check:
     name: Sonar Check
@@ -25,6 +22,25 @@ jobs:
       - name: Restore
         run: dotnet restore NetSdrClient.sln
         
+      - name: Test with Coverage
+        run: dotnet test NetSdrClient.sln -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
+        
+      - name: Prepare Coverage for SonarCloud
+        run: |
+          $coverageFile = Get-ChildItem -Path ./TestResults -Recurse -Filter "coverage.cobertura.xml" | Select-Object -First 1
+          if ($coverageFile) {
+            Write-Host "Found coverage file: $($coverageFile.FullName)"
+            echo "COVERAGE_FILE=$($coverageFile.FullName)" >> $env:GITHUB_ENV
+          }
+        shell: pwsh
+        
+      - name: Convert Coverage to SonarQube format
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator "-reports:${{ env.COVERAGE_FILE }}" "-targetdir:./CoverageReport" "-reporttypes:SonarQube"
+          echo "SONAR_COVERAGE_FILE=./CoverageReport/SonarQube.xml" >> $env:GITHUB_ENV
+        shell: pwsh
+          
       - name: SonarScanner Begin
         run: |
           dotnet tool install --global dotnet-sonarscanner
@@ -34,21 +50,17 @@ jobs:
             /o:"8540675-star" `
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
             /d:sonar.host.url="https://sonarcloud.io" `
-            /d:sonar.cs.opencover.reportsPaths="**/TestResults/**/coverage.cobertura.xml" `
+            /d:sonar.coverageReportPaths="${{ env.SONAR_COVERAGE_FILE }}" `
             /d:sonar.coverage.exclusions=**/Program.cs `
             /d:sonar.cpd.cs.minimumTokens=40 `
             /d:sonar.cpd.cs.minimumLines=5 `
-            /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/**
+            /d:sonar.exclusions=**/bin/**,**/obj/**,**/sonarcloud.yml,**/TestResults/** `
+            /d:sonar.qualitygate.wait=false
         shell: pwsh
         
       - name: Build
         run: dotnet build NetSdrClient.sln -c Release --no-restore
         
-      - name: Test with Coverage
-        run: dotnet test NetSdrClient.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
-        
       - name: SonarScanner End
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
         shell: pwsh
