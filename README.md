@@ -6,3 +6,5 @@
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=8540675-star_NetSdrClient&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=8540675-star_NetSdrClient)
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=8540675-star_NetSdrClient&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=8540675-star_NetSdrClient)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=8540675-star_NetSdrClient&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=8540675-star_NetSdrClient)
+
+-----
