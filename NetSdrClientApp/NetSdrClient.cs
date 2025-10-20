@@ -1,161 +1,120 @@
-﻿using NetSdrClientApp.Messages;
+using Moq;
+using NetSdrClientApp;
 using NetSdrClientApp.Networking;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using static NetSdrClientApp.Messages.NetSdrMessageHelper;
 
-namespace NetSdrClientApp
+namespace NetSdrClientAppTests;
+
+public class NetSdrClientTests
 {
-    public class NetSdrClient
+    private NetSdrClient _client;
+    private Mock<ITcpClient> _tcpMock;
+    private Mock<IUdpClient> _udpMock;
+
+    [SetUp]
+    public void Setup()
     {
-        private readonly ITcpClient _tcpClient;
-        private readonly IUdpClient _udpClient;
-
-        private TaskCompletionSource<byte[]>? _responseTaskSource;
-
-        public bool IQStarted { get; private set; }
-
-        public NetSdrClient(ITcpClient tcpClient, IUdpClient udpClient)
+        _tcpMock = new Mock<ITcpClient>();
+        _tcpMock.Setup(tcp => tcp.Connect()).Callback(() =>
         {
-            _tcpClient = tcpClient;
-            _udpClient = udpClient;
-
-            _tcpClient.MessageReceived += _tcpClient_MessageReceived;
-            _udpClient.MessageReceived += _udpClient_MessageReceived;
-        }
-
-        public async Task ConnectAsync()
+            _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
+        });
+        _tcpMock.Setup(tcp => tcp.Disconnect()).Callback(() =>
         {
-            if (!_tcpClient.Connected)
-            {
-                _tcpClient.Connect();
-
-                var sampleRate = BitConverter.GetBytes((long)100000).Take(5).ToArray();
-                var automaticFilterMode = BitConverter.GetBytes((ushort)0).ToArray();
-                var adMode = new byte[] { 0x00, 0x03 };
-
-                //Host pre setup
-                var msgs = new List<byte[]>
-                {
-                    NetSdrMessageHelper.GetControlItemMessage(MsgTypes.SetControlItem, ControlItemCodes.IQOutputDataSampleRate, sampleRate),
-                    NetSdrMessageHelper.GetControlItemMessage(MsgTypes.SetControlItem, ControlItemCodes.RFFilter, automaticFilterMode),
-                    NetSdrMessageHelper.GetControlItemMessage(MsgTypes.SetControlItem, ControlItemCodes.ADModes, adMode),
-                };
-
-                foreach (var msg in msgs)
-                {
-                    await SendTcpRequest(msg);
-                }
-            }
-        }
-
-        public void Disconnect()
+            _tcpMock.Setup(tcp => tcp.Connected).Returns(false);
+        });
+        _tcpMock.Setup(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>())).Callback<byte[]>((bytes) =>
         {
-            _tcpClient.Disconnect();
-        }
+            _tcpMock.Raise(tcp => tcp.MessageReceived += null, _tcpMock.Object, bytes);
+        });
 
-        public async Task StartIQAsync()
-        {
-            if (!_tcpClient.Connected)
-            {
-                Console.WriteLine("No active connection.");
-                return;
-            }
+        _udpMock = new Mock<IUdpClient>();
+        _client = new NetSdrClient(_tcpMock.Object, _udpMock.Object);
+    }
 
-            var iqDataMode = (byte)0x80;
-            var start = (byte)0x02;
-            var fifo16bitCaptureMode = (byte)0x01;
-            var n = (byte)1;
+    [Test]
+    public async Task ConnectAsyncTest()
+    {
+        //act
+        await _client.ConnectAsync();
+        //assert
+        _tcpMock.Verify(tcp => tcp.Connect(), Times.Once);
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Exactly(3));
+    }
 
-            var args = new[] { iqDataMode, start, fifo16bitCaptureMode, n };
+    [Test]
+    public void DisconnectWithNoConnectionTest()
+    {
+        //act
+        _client.Disconnect();
+        //assert
+        _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
+    }
+    
+    [Test]
+    public void DisconnectTest()
+    {
+        //Arrange 
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
+        //act
+        _client.Disconnect();
+        //assert
+        _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
+    }
 
-            var msg = NetSdrMessageHelper.GetControlItemMessage(MsgTypes.SetControlItem, ControlItemCodes.ReceiverState, args);
+    [Test]
+    public async Task StartIQNoConnectionTest()
+    {
+        //act
+        await _client.StartIQAsync();
+        //assert
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+        _tcpMock.VerifyGet(tcp => tcp.Connected, Times.AtLeastOnce);
+    }
 
-            await SendTcpRequest(msg);
+    [Test]
+    public async Task StartIQTest()
+    {
+        //Arrange 
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
+        //act
+        await _client.StartIQAsync();
+        //assert
+        _udpMock.Verify(udp => udp.StartListeningAsync(), Times.Once);
+        Assert.That(_client.IQStarted, Is.True);
+    }
 
-            IQStarted = true;
+    [Test]
+    public async Task StopIQTest()
+    {
+        //Arrange 
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
+        //act
+        await _client.StopIQAsync();
+        //assert
+        _udpMock.Verify(udp => udp.StopListening(), Times.Once);
+        Assert.That(_client.IQStarted, Is.False);
+    }
 
-            _ = _udpClient.StartListeningAsync();
-        }
+    [Test]
+    public async Task ChangeFrequencyAsync_ShouldSendMessage_WhenConnected()
+    {
+        // Arrange
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
+        // Act
+        await _client.ChangeFrequencyAsync(20000000, 1);
+        // Assert
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Once());
+    }
 
-        public async Task StopIQAsync()
-        {
-            if (!_tcpClient.Connected)
-            {
-                Console.WriteLine("No active connection.");
-                return;
-            }
-
-            var stop = (byte)0x01;
-
-            var args = new byte[] { 0, stop, 0, 0 };
-
-            var msg = NetSdrMessageHelper.GetControlItemMessage(MsgTypes.SetControlItem, ControlItemCodes.ReceiverState, args);
-
-            await SendTcpRequest(msg);
-
-            IQStarted = false;
-
-            _udpClient.StopListening();
-        }
-
-        public async Task ChangeFrequencyAsync(long hz, int channel)
-        {
-            var channelArg = (byte)channel;
-            var frequencyArg = BitConverter.GetBytes(hz).Take(5);
-            var args = new[] { channelArg }.Concat(frequencyArg).ToArray();
-
-            var msg = NetSdrMessageHelper.GetControlItemMessage(MsgTypes.SetControlItem, ControlItemCodes.ReceiverFrequency, args);
-
-            await SendTcpRequest(msg);
-        }
-
-        private void _udpClient_MessageReceived(object? sender, byte[] e)
-        {
-            NetSdrMessageHelper.TranslateMessage(e, out _, out _, out _, out byte[] body);
-            var samples = NetSdrMessageHelper.GetSamples(16, body);
-
-            Console.WriteLine($"Samples recieved: " + body.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
-
-            using (FileStream fs = new FileStream("samples.bin", FileMode.Append, FileAccess.Write, FileShare.Read))
-            using (BinaryWriter sw = new BinaryWriter(fs))
-            {
-                foreach (var sample in samples)
-                {
-                    sw.Write((short)sample); //write 16 bit per sample as configured 
-                }
-            }
-        }
-
-        private async Task<byte[]?> SendTcpRequest(byte[] msg)
-        {
-            if (!_tcpClient.Connected)
-            {
-                Console.WriteLine("No active connection.");
-                return null;
-            }
-
-            _responseTaskSource = new TaskCompletionSource<byte[]>(TaskCreationOptions.RunContinuationsAsynchronously);
-            var responseTask = _responseTaskSource.Task;
-
-            await _tcpClient.SendMessageAsync(msg);
-
-            var resp = await responseTask;
-
-            return resp;
-        }
-
-        private void _tcpClient_MessageReceived(object? sender, byte[] e)
-        {
-            if (_responseTaskSource != null)
-            {
-                _responseTaskSource.SetResult(e);
-                _responseTaskSource = null;
-            }
-            Console.WriteLine("Response recieved: " + e.Select(b => Convert.ToString(b, toBase: 16)).Aggregate((l, r) => $"{l} {r}"));
-        }
+    [Test]
+    public async Task StopIQAsync_ShouldDoNothing_WhenNotConnected()
+    {
+        // Arrange
+        _tcpMock.Setup(tcp => tcp.Connected).Returns(false);
+        // Act
+        await _client.StopIQAsync();
+        // Assert
+        _tcpMock.Verify(tcp => tcp.SendMessageAsync(It.IsAny<byte[]>()), Times.Never);
+        _udpMock.Verify(udp => udp.StopListening(), Times.Never);
     }
 }
