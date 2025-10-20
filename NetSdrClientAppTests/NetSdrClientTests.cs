@@ -42,21 +42,21 @@ public class NetSdrClientTests
     }
 
     [Test]
-    public async Task DisconnectWithNoConnectionTest()
+    public void DisconnectWithNoConnectionTest()
     {
         //act
-        await _client.DisconnectAsync();
+        _client.Disconnect();
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
     }
     
     [Test]
-    public async Task DisconnectTest()
+    public void DisconnectTest()
     {
         //Arrange 
         _tcpMock.Setup(tcp => tcp.Connected).Returns(true);
         //act
-        await _client.DisconnectAsync();
+        _client.Disconnect();
         //assert
         _tcpMock.Verify(tcp => tcp.Disconnect(), Times.Once);
     }
