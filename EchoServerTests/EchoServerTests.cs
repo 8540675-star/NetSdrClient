@@ -42,7 +42,7 @@ namespace EchoServerTests
             byte[] result = await _handler.HandleMessageAsync(inputData, token);
 
             // Assert
-            Assert.That(result.Length, Is.EqualTo(0));
+            Assert.That(result, Has.Length.EqualTo(0));
         }
 
         [Test]
