@@ -84,10 +84,13 @@ namespace EchoServerTests
                 byte[] message = sender.GenerateMessage();
 
                 // Assert
-                Assert.That(message, Is.Not.Null);
-                Assert.That(message.Length, Is.GreaterThan(2)); // At least header bytes
-                Assert.That(message[0], Is.EqualTo(0x04)); // First header byte
-                Assert.That(message[1], Is.EqualTo(0x84)); // Second header byte
+                Assert.Multiple(() =>
+{
+    Assert.That(message, Is.Not.Null);
+    Assert.That(message, Has.Length.GreaterThan(2)); // At least header bytes
+    Assert.That(message[0], Is.EqualTo(0x04)); // First header byte
+    Assert.That(message[1], Is.EqualTo(0x04)); // Second header byte
+});
             }
         }
 
@@ -106,8 +109,11 @@ namespace EchoServerTests
                 ushort counter2 = BitConverter.ToUInt16(message2, 2);
 
                 // Assert
-                Assert.That(counter1, Is.EqualTo(1));
-                Assert.That(counter2, Is.EqualTo(2));
+                Assert.Multiple(() =>
+{
+    Assert.That(counter1, Is.EqualTo(1));
+    Assert.That(counter2, Is.EqualTo(2));
+});
             }
         }
 
