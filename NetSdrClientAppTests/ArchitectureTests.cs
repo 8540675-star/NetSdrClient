@@ -91,5 +91,27 @@ namespace NetSdrClientAppTests
                 "Implementation classes in Networking (except Wrappers) should not be public. " +
                 $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
         }
+
+        [Test]
+        public void NetSdrClient_ShouldBePublic()
+        {
+            // Arrange
+            var assembly = typeof(NetSdrClientApp.NetSdrClient).Assembly;
+
+            // Act
+            var result = Types.InAssembly(assembly)
+                .That()
+                .HaveNameMatching("NetSdrClient")
+                .And()
+                .DoNotResideInNamespace("Coverlet.Core.Instrumentation") // Ignore Coverlet technical classes
+                .Should()
+                .BePublic()
+                .GetResult();
+
+            // Assert
+            Assert.IsTrue(result.IsSuccessful,
+                "NetSdrClient should be public as it's the main API class. " +
+                $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
+        }
     }
 }
