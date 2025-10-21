@@ -87,9 +87,9 @@ namespace EchoServerTests
                 Assert.Multiple(() =>
                 {
                     Assert.That(message, Is.Not.Null);
-                    Assert.That(message, Has.Length.GreaterThan(2)); // At least header bytes
-                    Assert.That(message[0], Is.EqualTo(0x04)); // First header byte
-                    Assert.That(message[1], Is.EqualTo(0x84)); // Second header byte
+                    Assert.That(message, Has.Length.GreaterThan(2));
+                    Assert.That(message[0], Is.EqualTo(0x04));
+                    Assert.That(message[1], Is.EqualTo(0x84));
                 });
             }
         }
