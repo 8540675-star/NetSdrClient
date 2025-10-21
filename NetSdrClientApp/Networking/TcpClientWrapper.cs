@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NetSdrClientApp.Messages;
 
 namespace NetSdrClientApp.Networking
 {
@@ -125,6 +126,13 @@ namespace NetSdrClientApp.Networking
             {
                 throw new InvalidOperationException("Not connected to a server.");
             }
+        }
+
+        // Порушення архітектурного правила для демонстрації
+        private void ViolateArchitectureRule()
+        {
+            var helper = typeof(NetSdrMessageHelper);
+            Console.WriteLine($"Violating rule: {helper.Name}");
         }
 
         public void Dispose()
