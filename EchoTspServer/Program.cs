@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,13 +9,14 @@ namespace EchoServer
     public class EchoServer
     {
         private readonly int _port;
+        private readonly IMessageHandler _messageHandler;
         private TcpListener _listener;
         private CancellationTokenSource _cancellationTokenSource;
 
-        //constuctor
-        public EchoServer(int port)
+        public EchoServer(int port, IMessageHandler messageHandler)
         {
             _port = port;
+            _messageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
             _cancellationTokenSource = new CancellationTokenSource();
         }
 
@@ -37,7 +37,6 @@ namespace EchoServer
                 }
                 catch (ObjectDisposedException)
                 {
-                    // Listener has been closed
                     break;
                 }
             }
@@ -45,7 +44,7 @@ namespace EchoServer
             Console.WriteLine("Server shutdown.");
         }
 
-        private async Task HandleClientAsync(TcpClient client, CancellationToken token)
+        public async Task HandleClientAsync(TcpClient client, CancellationToken token)
         {
             using (NetworkStream stream = client.GetStream())
             {
@@ -56,9 +55,13 @@ namespace EchoServer
 
                     while (!token.IsCancellationRequested && (bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length, token)) > 0)
                     {
-                        // Echo back the received message
-                        await stream.WriteAsync(buffer, 0, bytesRead, token);
-                        Console.WriteLine($"Echoed {bytesRead} bytes to the client.");
+                        byte[] receivedData = new byte[bytesRead];
+                        Array.Copy(buffer, receivedData, bytesRead);
+
+                        byte[] response = await _messageHandler.HandleMessageAsync(receivedData, token);
+
+                        await stream.WriteAsync(response, 0, response.Length, token);
+                        Console.WriteLine($"Echoed {response.Length} bytes to the client.");
                     }
                 }
                 catch (Exception ex) when (!(ex is OperationCanceledException))
@@ -80,36 +83,7 @@ namespace EchoServer
             _cancellationTokenSource.Dispose();
             Console.WriteLine("Server stopped.");
         }
-
-        public static async Task Main(string[] args)
-        {
-            EchoServer server = new EchoServer(5000);
-
-            // Start the server in a separate task
-            _ = Task.Run(() => server.StartAsync());
-
-            string host = "127.0.0.1"; // Target IP
-            int port = 60000;          // Target Port
-            int intervalMilliseconds = 5000; // Send every 3 seconds
-
-            using (var sender = new UdpTimedSender(host, port))
-            {
-                Console.WriteLine("Press any key to stop sending...");
-                sender.StartSending(intervalMilliseconds);
-
-                Console.WriteLine("Press 'q' to quit...");
-                while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
-                {
-                    // Just wait until 'q' is pressed
-                }
-
-                sender.StopSending();
-                server.Stop();
-                Console.WriteLine("Sender stopped.");
-            }
-        }
     }
-
 
     public class UdpTimedSender : IDisposable
     {
@@ -117,12 +91,14 @@ namespace EchoServer
         private readonly int _port;
         private readonly UdpClient _udpClient;
         private Timer _timer;
+        private ushort _messageCounter;
 
         public UdpTimedSender(string host, int port)
         {
             _host = host;
             _port = port;
             _udpClient = new UdpClient();
+            _messageCounter = 0;
         }
 
         public void StartSending(int intervalMilliseconds)
@@ -133,23 +109,30 @@ namespace EchoServer
             _timer = new Timer(SendMessageCallback, null, 0, intervalMilliseconds);
         }
 
-        ushort i = 0;
+        public byte[] GenerateMessage()
+        {
+            Random rnd = new Random();
+            byte[] samples = new byte[1024];
+            rnd.NextBytes(samples);
+            _messageCounter++;
+
+            byte[] msg = new byte[] { 0x04, 0x84 }
+                .Concat(BitConverter.GetBytes(_messageCounter))
+                .Concat(samples)
+                .ToArray();
+
+            return msg;
+        }
 
         private void SendMessageCallback(object state)
         {
             try
             {
-                //dummy data
-                Random rnd = new Random();
-                byte[] samples = new byte[1024];
-                rnd.NextBytes(samples);
-                i++;
-
-                byte[] msg = (new byte[] { 0x04, 0x84 }).Concat(BitConverter.GetBytes(i)).Concat(samples).ToArray();
+                byte[] msg = GenerateMessage();
                 var endpoint = new IPEndPoint(IPAddress.Parse(_host), _port);
 
                 _udpClient.Send(msg, msg.Length, endpoint);
-                Console.WriteLine($"Message sent to {_host}:{_port} ");
+                Console.WriteLine($"Message sent to {_host}:{_port}");
             }
             catch (Exception ex)
             {
@@ -167,6 +150,36 @@ namespace EchoServer
         {
             StopSending();
             _udpClient.Dispose();
+        }
+    }
+
+    public class Program
+    {
+        public static async Task Main(string[] args)
+        {
+            var messageHandler = new EchoMessageHandler();
+            EchoServer server = new EchoServer(5000, messageHandler);
+
+            _ = Task.Run(() => server.StartAsync());
+
+            string host = "127.0.0.1";
+            int port = 60000;
+            int intervalMilliseconds = 5000;
+
+            using (var sender = new UdpTimedSender(host, port))
+            {
+                Console.WriteLine("Press any key to stop sending...");
+                sender.StartSending(intervalMilliseconds);
+
+                Console.WriteLine("Press 'q' to quit...");
+                while (Console.ReadKey(intercept: true).Key != ConsoleKey.Q)
+                {
+                }
+
+                sender.StopSending();
+                server.Stop();
+                Console.WriteLine("Sender stopped.");
+            }
         }
     }
 }
