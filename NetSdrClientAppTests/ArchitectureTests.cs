@@ -23,7 +23,7 @@ namespace NetSdrClientAppTests
                 .GetResult();
 
             // Assert
-            Assert.IsTrue(result.IsSuccessful, 
+            Assert.That(result.IsSuccessful, Is.True, 
                 "Messages namespace should not depend on Networking namespace. " +
                 $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
         }
@@ -43,7 +43,7 @@ namespace NetSdrClientAppTests
                 .GetResult();
 
             // Assert
-            Assert.IsTrue(result.IsSuccessful,
+            Assert.That(result.IsSuccessful, Is.True,
                 "Networking namespace should not depend on Messages namespace. " +
                 $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
         }
@@ -63,7 +63,7 @@ namespace NetSdrClientAppTests
                 .GetResult();
 
             // Assert
-            Assert.IsTrue(result.IsSuccessful,
+            Assert.That(result.IsSuccessful, Is.True,
                 "All interfaces should start with 'I'. " +
                 $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
         }
@@ -87,7 +87,7 @@ namespace NetSdrClientAppTests
                 .GetResult();
 
             // Assert
-            Assert.IsTrue(result.IsSuccessful,
+            Assert.That(result.IsSuccessful, Is.True,
                 "Implementation classes in Networking (except Wrappers) should not be public. " +
                 $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
         }
@@ -109,7 +109,7 @@ namespace NetSdrClientAppTests
                 .GetResult();
 
             // Assert
-            Assert.IsTrue(result.IsSuccessful,
+            Assert.That(result.IsSuccessful, Is.True,
                 "NetSdrClient should be public as it's the main API class. " +
                 $"Failing types: {string.Join(", ", result.FailingTypeNames ?? new List<string>())}");
         }
