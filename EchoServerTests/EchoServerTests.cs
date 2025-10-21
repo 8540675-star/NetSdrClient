@@ -1,4 +1,4 @@
-﻿using NUnit.Framework;
+using NUnit.Framework;
 using EchoServer;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,12 +85,12 @@ namespace EchoServerTests
 
                 // Assert
                 Assert.Multiple(() =>
-{
-    Assert.That(message, Is.Not.Null);
-    Assert.That(message, Has.Length.GreaterThan(2)); // At least header bytes
-    Assert.That(message[0], Is.EqualTo(0x04)); // First header byte
-    Assert.That(message[1], Is.EqualTo(0x04)); // Second header byte
-});
+                {
+                    Assert.That(message, Is.Not.Null);
+                    Assert.That(message, Has.Length.GreaterThan(2)); // At least header bytes
+                    Assert.That(message[0], Is.EqualTo(0x04)); // First header byte
+                    Assert.That(message[1], Is.EqualTo(0x04)); // Second header byte
+                });
             }
         }
 
@@ -110,10 +110,10 @@ namespace EchoServerTests
 
                 // Assert
                 Assert.Multiple(() =>
-{
-    Assert.That(counter1, Is.EqualTo(1));
-    Assert.That(counter2, Is.EqualTo(2));
-});
+                {
+                    Assert.That(counter1, Is.EqualTo(1));
+                    Assert.That(counter2, Is.EqualTo(2));
+                });
             }
         }
 
@@ -156,4 +156,3 @@ namespace EchoServerTests
             Assert.That(server, Is.Not.Null);
         }
     }
-}
