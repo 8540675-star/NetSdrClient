@@ -35,7 +35,7 @@ namespace EchoServerTests
         public async Task HandleMessageAsync_WithEmptyData_ReturnsEmptyData()
         {
             // Arrange
-            byte[] inputData = new byte[0];
+            byte[] inputData = Array.Empty<byte>();
             var token = CancellationToken.None;
 
             // Act
