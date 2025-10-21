@@ -156,3 +156,4 @@ namespace EchoServerTests
             Assert.That(server, Is.Not.Null);
         }
     }
+}
