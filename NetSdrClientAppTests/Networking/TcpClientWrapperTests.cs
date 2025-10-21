@@ -108,11 +108,12 @@ namespace NetSdrClientAppTests.Networking
             byte[] buffer = new byte[1024];
             var stream = _serverClient.GetStream();
             var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
+            var receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
             Assert.Multiple(() =>
             {
                 Assert.That(bytesRead, Is.GreaterThan(0));
-                Assert.That(Encoding.UTF8.GetString(buffer, 0, bytesRead), Is.EqualTo("Hello"));
+                Assert.That(receivedText, Is.EqualTo("Hello"));
             });
         }
 
@@ -174,13 +175,14 @@ namespace NetSdrClientAppTests.Networking
 
             // Wait for event with timeout
             var completedTask = await Task.WhenAny(messageReceivedEvent.Task, Task.Delay(3000));
+            var receivedText = receivedData != null ? Encoding.UTF8.GetString(receivedData) : null;
 
             // Assert
             Assert.Multiple(() =>
             {
                 Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task), "MessageReceived event should fire");
                 Assert.That(receivedData, Is.Not.Null);
-                Assert.That(Encoding.UTF8.GetString(receivedData!), Is.EqualTo("Server Response"));
+                Assert.That(receivedText, Is.EqualTo("Server Response"));
             });
         }
 
