@@ -107,14 +107,14 @@ namespace NetSdrClientAppTests.Networking
             // Assert - read on server side
             byte[] buffer = new byte[1024];
             var stream = _serverClient.GetStream();
-            var memoryBuffer = new Memory<byte>(buffer);
-            var bytesRead = await stream.ReadAsync(memoryBuffer, CancellationToken.None);
+            var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
+            var receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(bytesRead, Is.GreaterThan(0));
-                Assert.That(Encoding.UTF8.GetString(buffer, 0, bytesRead), Is.EqualTo("Hello"));
-            }
+                Assert.That(receivedText, Is.EqualTo("Hello"));
+            });
         }
 
         [Test]
@@ -133,8 +133,7 @@ namespace NetSdrClientAppTests.Networking
             // Assert
             byte[] buffer = new byte[1024];
             var stream = _serverClient.GetStream();
-            var memoryBuffer = new Memory<byte>(buffer);
-            var bytesRead = await stream.ReadAsync(memoryBuffer, CancellationToken.None);
+            var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
 
             Assert.That(Encoding.UTF8.GetString(buffer, 0, bytesRead), Is.EqualTo("Test Message"));
         }
@@ -172,18 +171,19 @@ namespace NetSdrClientAppTests.Networking
 
             // Act - send data from server to client
             byte[] testData = Encoding.UTF8.GetBytes("Server Response");
-            await _serverClient.GetStream().WriteAsync(new ReadOnlyMemory<byte>(testData), CancellationToken.None);
+            await _serverClient.GetStream().WriteAsync(testData.AsMemory(0, testData.Length));
 
             // Wait for event with timeout
             var completedTask = await Task.WhenAny(messageReceivedEvent.Task, Task.Delay(3000));
+            var receivedText = receivedData != null ? Encoding.UTF8.GetString(receivedData) : null;
 
             // Assert
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task), "MessageReceived event should fire");
                 Assert.That(receivedData, Is.Not.Null);
-                Assert.That(Encoding.UTF8.GetString(receivedData!), Is.EqualTo("Server Response"));
-            }
+                Assert.That(receivedText, Is.EqualTo("Server Response"));
+            });
         }
 
         [Test]
@@ -310,8 +310,7 @@ namespace NetSdrClientAppTests.Networking
             // Assert
             byte[] buffer = new byte[10000];
             var stream = _serverClient.GetStream();
-            var memoryBuffer = new Memory<byte>(buffer);
-            var bytesRead = await stream.ReadAsync(memoryBuffer, CancellationToken.None);
+            var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
 
             Assert.That(bytesRead, Is.EqualTo(8192));
         }
