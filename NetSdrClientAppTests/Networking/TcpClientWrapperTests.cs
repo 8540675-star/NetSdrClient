@@ -108,12 +108,12 @@ namespace NetSdrClientAppTests.Networking
             byte[] buffer = new byte[1024];
             var stream = _serverClient.GetStream();
             var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
-            var receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            var receivedMessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
             using (Assert.EnterMultipleScope())
             {
                 Assert.That(bytesRead, Is.GreaterThan(0));
-                Assert.That(receivedText, Is.EqualTo("Hello"));
+                Assert.That(receivedMessage, Is.EqualTo("Hello"));
             }
         }
 
