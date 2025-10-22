@@ -110,11 +110,11 @@ namespace NetSdrClientAppTests.Networking
             var bytesRead = await stream.ReadAsync(buffer.AsMemory(0, buffer.Length));
             var receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
 
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(bytesRead, Is.GreaterThan(0));
                 Assert.That(receivedText, Is.EqualTo("Hello"));
-            });
+            }
         }
 
         [Test]
@@ -178,12 +178,12 @@ namespace NetSdrClientAppTests.Networking
             var receivedText = receivedData != null ? Encoding.UTF8.GetString(receivedData) : null;
 
             // Assert
-            Assert.Multiple(() =>
+            using (Assert.EnterMultipleScope())
             {
                 Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task), "MessageReceived event should fire");
                 Assert.That(receivedData, Is.Not.Null);
                 Assert.That(receivedText, Is.EqualTo("Server Response"));
-            });
+            }
         }
 
         [Test]
