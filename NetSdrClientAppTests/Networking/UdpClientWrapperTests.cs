@@ -334,7 +334,7 @@ namespace NetSdrClientAppTests.Networking
             {
                 Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task));
                 Assert.That(receivedData, Is.Not.Null);
-                Assert.That(receivedData!.Length, Is.EqualTo(8000));
+                Assert.That(receivedData, Has.Length.EqualTo(8000));
             }
 
             wrapper.StopListening();
