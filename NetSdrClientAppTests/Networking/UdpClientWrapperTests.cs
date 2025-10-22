@@ -72,12 +72,9 @@ namespace NetSdrClientAppTests.Networking
             var completedTask = await Task.WhenAny(messageReceivedEvent.Task, Task.Delay(3000));
 
             // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task), "MessageReceived event should fire");
-                Assert.That(receivedData, Is.Not.Null);
-                Assert.That(Encoding.UTF8.GetString(receivedData!), Is.EqualTo("UDP Test Message"));
-            });
+            Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task), "MessageReceived event should fire");
+            Assert.That(receivedData, Is.Not.Null);
+            Assert.That(Encoding.UTF8.GetString(receivedData!), Is.EqualTo("UDP Test Message"));
 
             // Cleanup
             wrapper.StopListening();
@@ -119,12 +116,9 @@ namespace NetSdrClientAppTests.Networking
             var completedTask = await Task.WhenAny(allMessagesReceived.Task, Task.Delay(5000));
 
             // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(completedTask, Is.EqualTo(allMessagesReceived.Task), "All messages should be received");
-                Assert.That(messageCount, Is.EqualTo(3));
-                Assert.That(receivedMessages, Has.Count.EqualTo(3));
-            });
+            Assert.That(completedTask, Is.EqualTo(allMessagesReceived.Task), "All messages should be received");
+            Assert.That(messageCount, Is.EqualTo(3));
+            Assert.That(receivedMessages.Count, Is.EqualTo(3));
 
             // Cleanup
             wrapper.StopListening();
@@ -330,12 +324,9 @@ namespace NetSdrClientAppTests.Networking
             var completedTask = await Task.WhenAny(messageReceivedEvent.Task, Task.Delay(3000));
 
             // Assert
-            Assert.Multiple(() =>
-            {
-                Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task));
-                Assert.That(receivedData, Is.Not.Null);
-                Assert.That(receivedData!.Length, Is.EqualTo(8000));
-            });
+            Assert.That(completedTask, Is.EqualTo(messageReceivedEvent.Task));
+            Assert.That(receivedData, Is.Not.Null);
+            Assert.That(receivedData!.Length, Is.EqualTo(8000));
 
             wrapper.StopListening();
             await Task.Delay(100);
